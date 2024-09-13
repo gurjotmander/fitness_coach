@@ -1,17 +1,17 @@
-import tensorflow as tf
-from tensorflow.python.keras.models import Sequential
-from tensorflow.python.keras.layers import Dense, Dropout
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
 
 def create_model(input_shape):
     model = Sequential([
-        Dense(128, input_shape=(input_shape,), activation='relu'),  # Input layer
-        Dropout(0.3),  # Dropout layer for regularization
-        Dense(64, activation='relu'),  # Hidden layer
-        Dropout(0.3),  # Another dropout layer
-        Dense(2, activation='softmax')  # Output layer with 2 classes ('standing' and 'squatting')
+        Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+        MaxPooling2D((2, 2)),
+        Conv2D(64, (3, 3), activation='relu'),
+        MaxPooling2D((2, 2)),
+        Conv2D(128, (3, 3), activation='relu'),
+        MaxPooling2D((2, 2)),
+        Flatten(),
+        Dense(512, activation='relu'),
+        Dropout(0.5),
+        Dense(1, activation='sigmoid')
     ])
-
-    # Compile model
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    
     return model

@@ -1,37 +1,64 @@
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 from tensorflow.keras.utils import to_categorical
-from cnn import create_model  # Import the model definition from cnn_model.pys
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
+from cnn import create_model
 
-# Load and Prepare the Data
-csv_file_path = 'Model/data/keypoints.csv'
+# Load the CSV file
+csv_file_path = 'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/keypoints.csv'
 df = pd.read_csv(csv_file_path)
 
-# 0 for squating, 1 for standing
-y = df['pose']
+# Load images and labels
+def load_data(df, img_size=(128, 128)):
+    images = []
+    labels = []
+    for index, row in df.iterrows():
+        img_path = f'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/images/person/{row["image_name"]}'
+        image = load_img(img_path, target_size=img_size)
+        image = img_to_array(image) / 255.0  # Normalize the image
+        images.append(image)
+        labels.append(row['label'])
+    
+    return np.array(images), np.array(labels)
 
-# Drop non-feature columns and convert the rest to a NumPy array
-X = df.drop(['image_name', 'pose'], axis=1).to_numpy()
+# Prepare data
+X, y = load_data(df)
 
-# Normalize keypoint values
-X = X / np.max(X)
+# Encode labels
+label_encoder = LabelEncoder()
+y_encoded = label_encoder.fit_transform(y)  # Convert labels to numeric values
+
+# Check if there are exactly 2 unique labels
+num_classes = len(np.unique(y_encoded))
+print(f"Number of classes: {num_classes}")
+
 
 # One-hot encode the labels
-y = to_categorical(y, num_classes=2)
+num_classes = len(np.unique(y_encoded))
+y_encoded = to_categorical(y_encoded, num_classes=num_classes)
 
-# Split into training and testing sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+print(f"Shape of y_encoded before splitting: {y_encoded.shape}")
 
-# Import and Create Model
-model = create_model(X_train.shape[1])  # Pass input shape to the model function
+# Split data
+X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
 
-# Train Model
+# Define input shape for the CNN
+input_shape = (128, 128, 3)
+
+# Create and compile the model
+model = create_model(input_shape)  # Use the model from cnn.py
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])  # Use the model from cnn.py
+
+# Train the model
 history = model.fit(X_train, y_train, epochs=30, batch_size=32, validation_data=(X_test, y_test))
 
-# Evaluate Model
+# Evaluate the model
 loss, accuracy = model.evaluate(X_test, y_test)
 print(f"Test Accuracy: {accuracy * 100:.2f}%")
 
-# Save  Model
-model.save('Model/data/cnn_squat_detection_model.h5')
+# Save the model
+model.save('C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/cnn_pose_detection_model.h5')
