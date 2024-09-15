@@ -4,3 +4,4 @@ Model/data/images/frames
 Model/data/images/person
 Model/data/images/standing
 Model/data/images/squatting
+Model/data/cnn_pose_detection_model.h5
