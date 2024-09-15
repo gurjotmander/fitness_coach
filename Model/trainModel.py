@@ -15,7 +15,7 @@ def load_data(df, img_size=(128, 128)):
     images = []
     labels = []
     for index, row in df.iterrows():
-        img_path = f'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/images/person/{row["image_name"]}'
+        img_path = f'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/images/person/{row["image_name"]}'
         image = load_img(img_path, target_size=img_size)
         image = img_to_array(image) / 255.0  # Normalize the image
         images.append(image)
@@ -32,14 +32,11 @@ y_encoded = label_encoder.fit_transform(y)  # Convert labels to numeric values
 
 # Check if there are exactly 2 unique labels
 num_classes = len(np.unique(y_encoded))
-print(f"Number of classes: {num_classes}")
-
+if num_classes != 2:
+    raise ValueError(f"Expected 2 classes for binary classification, but found {num_classes} classes.")
 
 # One-hot encode the labels
-num_classes = len(np.unique(y_encoded))
 y_encoded = to_categorical(y_encoded, num_classes=num_classes)
-
-print(f"Shape of y_encoded before splitting: {y_encoded.shape}")
 
 # Split data
 X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2, random_state=42)
@@ -51,7 +48,7 @@ input_shape = (128, 128, 3)
 model = create_model(input_shape)  # Use the model from cnn.py
 model.compile(optimizer='adam',
               loss='binary_crossentropy',
-              metrics=['accuracy'])  # Use the model from cnn.py
+              metrics=['accuracy'])
 
 # Train the model
 history = model.fit(X_train, y_train, epochs=30, batch_size=32, validation_data=(X_test, y_test))
