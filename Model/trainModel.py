@@ -5,6 +5,7 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 from cnn import create_model
+#import tensorflowjs as tfjs
 
 # Load the CSV file
 csv_file_path = 'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/dataset.csv'
@@ -37,7 +38,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y_encoded, test_size=0.2,
 input_shape = (128, 128, 3)
 
 # Create and compile the model
-model = create_model(input_shape)  # Use the model from cnn.py
+model = create_model(input_shape)  # model from cnn.py
 model.compile(optimizer='adam',
               loss='binary_crossentropy',
               metrics=['accuracy'])
@@ -55,3 +56,4 @@ print(f"Accuracy: {accuracy}")
 
 # Save the model
 model.save('C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/cnn_pose_detection_model.keras')
+#tfjs.converters.save_keras_model(model, 'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/tfjs_model')
