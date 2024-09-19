@@ -1,3 +1,6 @@
+### This class adds labels the labels "squatting" and "standing" to the keypoint.csv and saves
+### it as dataset.csv with the appropriate data separated into those labels.
+
 import pandas as pd
 import os
 

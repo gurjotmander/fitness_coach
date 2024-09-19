@@ -1,12 +1,10 @@
 Model/data/videos
 Model/data/keypoints.csv
-Model/data/images/frames
-Model/data/images/person
-Model/data/images/standing
-Model/data/images/squatting
+Model/data/images
 Model/data/cnn_pose_detection_model.keras
 Model/data/cnn_pose_detection_model.h5
 Model/__pycache__
 node_modules
 package.json
 package-lock.json
+Model/data/cnn_pose_detection_model

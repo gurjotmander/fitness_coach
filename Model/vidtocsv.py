@@ -1,3 +1,6 @@
+### This class reads 3 videos and extracts keypoints from the human body 
+### using Yolov8 for pose detection and saves the data as keypoints.csv
+
 import cv2
 from ultralytics import YOLO
 import pandas as pd

@@ -1,3 +1,6 @@
+### This class prepares the data for training and trains the model from the cnn.py class
+### and then prints the resuls and saves the model as a keras file
+
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -5,7 +8,6 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from tensorflow.keras.preprocessing.image import img_to_array, load_img
 from cnn import create_model
-#import tensorflowjs as tfjs
 
 # Load the CSV file
 csv_file_path = 'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/dataset.csv'
@@ -56,4 +58,3 @@ print(f"Accuracy: {accuracy}")
 
 # Save the model
 model.save('C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/cnn_pose_detection_model.keras')
-#tfjs.converters.save_keras_model(model, 'C:/Users/gurjo/Documents/term 8/major project/fitness app/Model/data/tfjs_model')
