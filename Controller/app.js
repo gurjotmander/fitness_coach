@@ -10,7 +10,7 @@ let isProcessing = false;
 
 tf.setBackend('webgl');
 
-const worker = new Worker('/View/script/worker.js');
+const worker = new Worker('/Controller/worker.js');
 
 worker.onmessage = function(event) {
   const { isSquatting, confidence } = event.data;
@@ -45,11 +45,8 @@ async function reloadResources() {
 async function loadModel() {
   console.log("Loading model...");
   try {
-    model = await tf.loadLayersModel('../../Model/data/cnn_pose_detection_model/model.json');
+    model = await tf.loadLayersModel('/Model/data/cnn_pose_detection_model/model.json');
     console.log("Model loaded successfully");
-
-    const modelData = model.toJSON();
-    worker.postMessage({ modelData });
     
   } catch (error) {
     console.error("Error loading model:", error);
