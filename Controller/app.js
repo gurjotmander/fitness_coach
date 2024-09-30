@@ -1,22 +1,92 @@
+/**
+ * This class uses model.json to count user squat reps in real-time while
+ * drawing feedback on the camera for the user to see if the squat was performed.
+ * 
+ * This class uses worker.js to load the model in the background of the browser.
+ */
+
 var video = document.getElementById('video');
 const canvas = document.getElementById('canvas');
 const canvasContext = canvas.getContext('2d');
+const startButton = document.getElementById("button");
+const repDisplay = document.getElementById("currentSet");
+const setListDisplay = document.getElementById("listSets");
+const timer = document.getElementById("timer");
 
 let model;
 let frameCount = 0;
 let lastSquatDetectedTime = 0;
 const squatCooldown = 2000;
 let isProcessing = false;
+let isDetecting = false;
+let reps = 0;
+let sets = 1;
+let timerInterval;
+let startTime;
+let startedTimer = false;
 
 tf.setBackend('webgl');
+
+startButton.addEventListener("click", () => {
+  if (!isDetecting) {
+    reps = 0;
+    updateRepDisplay();
+    startSquatDetection();
+  } else {
+    currentReps();
+    stopTimer();
+    stopSquatDetection();
+  }
+  startButton.textContent = isDetecting ? "Start Workout" : "Stop Workout";
+  isDetecting = !isDetecting;
+});
 
 const worker = new Worker('/Controller/worker.js');
 
 worker.onmessage = function(event) {
   const { isSquatting, confidence } = event.data;
   console.log(`Received from worker: isSquatting=${isSquatting}, confidence=${confidence}`);
+  if (isSquatting && (Date.now() - lastSquatDetectedTime) > squatCooldown) {
+    reps++;
+    updateRepDisplay();
+  }
   drawFeedback(isSquatting, confidence);
 };
+
+function updateRepDisplay() {
+  repDisplay.textContent = `Set ${sets}: ${reps} reps`;
+}
+
+function currentReps() {
+  const timeElapsed = formatTime(Date.now() - startTime);
+  const previousSet = document.createElement("div");
+  previousSet.classList.add("previous-set");
+  previousSet.textContent = `Set ${sets}: ${reps} Reps (Time: ${timeElapsed})`;
+  setListDisplay.appendChild(previousSet);
+  
+  sets++;
+}
+
+function startTimer() {
+  startTime = Date.now();
+  timerInterval = setInterval(() => {
+    const timeElapsed = Date.now() - startTime;
+    timer.textContent = `Time: ${formatTime(timeElapsed)}`;
+  }, 1000);
+}
+
+function stopTimer() {
+  clearInterval(timerInterval);
+  timer.textContent = 'Time: 00:00';
+  startedTimer = false;
+}
+
+function formatTime(time) {
+  const totalSeconds = Math.floor(time / 1000);
+  const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+  const seconds = String(totalSeconds % 60).padStart(2, '0');
+  return `${minutes}:${seconds}`;
+} 
 
 async function cameraSetup() {
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -27,7 +97,7 @@ async function cameraSetup() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       console.log("Video metadata loaded, playing video.");
-      detectFrame(); // Start the detection process
+      detectFrame(); // Start detection
     };
   }
 }
@@ -56,7 +126,7 @@ async function loadModel() {
 function drawFeedback(isSquatting, confidence) {
   const currentTime = Date.now();
   if (isSquatting && (currentTime - lastSquatDetectedTime) > squatCooldown) {
-    lastSquatDetectedTime = currentTime; // Update the time when the squat was detected
+    lastSquatDetectedTime = currentTime; // Update the time when squat was detected
   }
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -75,6 +145,11 @@ function drawFeedback(isSquatting, confidence) {
     canvasContext.strokeStyle = 'blue';
     canvasContext.lineWidth = 5;
     canvasContext.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
+  }
+
+  if (!startedTimer && isSquatting) {
+    startTimer();
+    startedTimer = true;
   }
 }
 
@@ -112,15 +187,22 @@ async function detectFrame() {
   requestAnimationFrame(detectFrame);
 }
 
-async function detectPose() {
+async function startSquatDetection() {
   await reloadResources();
   await loadModel();
   await cameraSetup();
-
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
-
   detectFrame();
 }
 
-detectPose();
+function stopSquatDetection() {
+  console.log("Squat detection stopped");
+  if (video.srcObject) {
+      const tracks = video.srcObject.getTracks();
+      tracks.forEach(track => track.stop());
+      video.srcObject = null;
+  }
+  stopTimer();
+  startedTimer = false;
+}

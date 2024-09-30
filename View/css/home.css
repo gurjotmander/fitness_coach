@@ -7,10 +7,30 @@ body {
 	padding: 0;
 	background-color: #f0f0f0;
 	position: relative;
+	flex-direction: column;
+}
+
+.container {
+	display: flex;
+	margin-top: 50px;
+	justify-items: center; 
+  	align-items: start;
+}
+
+
+#video-container, #fbx-container {
+	position: relative;
+}
+
+#fbxCanvas {
+	display: block;
+	margin-left: 30px;
+	width: 400px;
+	height: 480px;
+	background-color: #000;
 }
 
 #video, #canvas {
-	position: absolute;
 	width: 640px;
 	height: 480px;
 }
@@ -21,11 +41,21 @@ body {
 	z-index: 1;
 }
 
+.set-container {
+	display: flex;
+  	flex-direction: column;
+  	align-items: center;
+  	margin-top: 10px;
+}  
+
 #canvas {
 	background-color: transparent;
 	border: 2px solid blue;
-	z-index: 2;
+	position: absolute;
+	top: 0;
+	left: 0;
 	pointer-events: none;
+	z-index: 2;
 }
 
 h1 {
@@ -34,4 +64,34 @@ h1 {
 	top: 10px;
 	width: 100%;
 	color: #333;
+}
+#button {
+	margin-top: 20px;
+	padding: 10px 20px;
+    font-size: 18px;
+}
+
+#currentSet {
+	margin-top: 30px;
+	font-size: 18px;
+    text-align: center;
+}
+
+#listSets {
+	margin-top: 20px;
+    font-size: 18px;
+    text-align: center;
+}
+
+#timer {
+	position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 3;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 18px;
+    text-align: center;
 }

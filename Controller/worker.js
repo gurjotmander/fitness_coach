@@ -1,3 +1,7 @@
+/**
+ * This class loads the model.json in the background of the browser.
+ */
+
 importScripts('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs');
 
 console.log("Worker script loaded");

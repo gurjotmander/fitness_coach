@@ -5,13 +5,29 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 		<title>Fitness Coach</title>
 		<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+		<script type="module" src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+		<script type="module" src="/Controller/loaders/FBXLoader.js"></script>
+		<script type="module" src="../../Controller/loadFBX.js" defer></script>
 		<link rel="stylesheet" href="../css/home.css">
 	</head>
 	
 	<body>
 		<h1>Welcome to Fitness Coach</h1>
-		<video autoplay="true" id="video" width="640" height="480"></video>
-		<canvas id="canvas" width="640" height="480"></canvas>
+		<div class="container">
+			<div id="video-container">
+				<video autoplay="true" id="video" width="640" height="480"></video>
+				<canvas id="canvas" width="640" height="480"></canvas>
+				<div id="timer">Time: </div>
+			</div>
+			<div id="fbx-container">
+				<canvas id="fbxCanvas"></canvas>
+			</div>
+		</div>
+		<div class="set-container">
+			<button id="button">Start Workout</button>
+			<div id="currentSet">Set 1: 0 reps</div>
+			<div id="listSets"></div>
+		</div>
 		<script src="../../Controller/app.js"></script>
 	</body>
 </html>
