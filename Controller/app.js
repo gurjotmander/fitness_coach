@@ -61,7 +61,11 @@ function currentReps() {
   const timeElapsed = formatTime(Date.now() - startTime);
   const previousSet = document.createElement("div");
   previousSet.classList.add("previous-set");
-  previousSet.textContent = `Set ${sets}: ${reps} Reps (Time: ${timeElapsed})`;
+  if (!startedTimer) {
+    previousSet.textContent = `Set ${sets}: ${reps} Reps (Time: 00:00)`;
+  } else {
+    previousSet.textContent = `Set ${sets}: ${reps} Reps (Time: ${timeElapsed})`;
+  }
   setListDisplay.appendChild(previousSet);
   
   sets++;
@@ -147,6 +151,7 @@ function drawFeedback(isSquatting, confidence) {
     canvasContext.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
   }
 
+  //Start timer when squat is performed
   if (!startedTimer && isSquatting) {
     startTimer();
     startedTimer = true;
