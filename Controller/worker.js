@@ -33,7 +33,6 @@ self.onmessage = async function(event) {
     }
     try {
       const input = tf.tensor(imageData, [1, 128, 128, 3]); // Ensure the shape matches the resized image
-      console.log("Input tensor shape:", input.shape);
 
       const predictions = await model.predict(input).array();
       const squatConfidence = predictions[0][0];

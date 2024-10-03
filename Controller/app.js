@@ -25,8 +25,14 @@ let timerInterval;
 let startTime;
 let startedTimer = false;
 
+const worker = new Worker('/Controller/worker.js');
+
 tf.setBackend('webgl');
 
+/**
+ * This function activates the squat detection when the "Start Workout" button 
+ * is clicked.
+ */
 startButton.addEventListener("click", () => {
   if (!isDetecting) {
     reps = 0;
@@ -41,8 +47,11 @@ startButton.addEventListener("click", () => {
   isDetecting = !isDetecting;
 });
 
-const worker = new Worker('/Controller/worker.js');
-
+/**
+ * Listens for squat detection data from the Web Worker class and calls functions to 
+ * update the html display.
+ * @param {*} event data sent from Web Worker
+ */
 worker.onmessage = function(event) {
   const { isSquatting, confidence } = event.data;
   console.log(`Received from worker: isSquatting=${isSquatting}, confidence=${confidence}`);
@@ -53,24 +62,34 @@ worker.onmessage = function(event) {
   drawFeedback(isSquatting, confidence);
 };
 
+/**
+ * Displays the updated number of sets and reps completed by the user.
+ */
 function updateRepDisplay() {
   repDisplay.textContent = `Set ${sets}: ${reps} reps`;
 }
 
+/**
+ * Displays the completed set and number of reps in a list beneath the previously 
+ * completed set and adds it to the DOM.
+ */
 function currentReps() {
   const timeElapsed = formatTime(Date.now() - startTime);
   const previousSet = document.createElement("div");
   previousSet.classList.add("previous-set");
-  if (!startedTimer) {
-    previousSet.textContent = `Set ${sets}: ${reps} Reps (Time: 00:00)`;
-  } else {
-    previousSet.textContent = `Set ${sets}: ${reps} Reps (Time: ${timeElapsed})`;
-  }
+
+  //Format time for completed set
+  previousSet.textContent = startedTimer? `Set ${sets}: ${reps} Reps (Time: ${timeElapsed})` : 
+  `Set ${sets}: ${reps} Reps (Time: 00:00)`;
   setListDisplay.appendChild(previousSet);
-  
+
+  //Update set for next set
   sets++;
 }
 
+/**
+ * Starts the timer and displays it in the html.
+ */
 function startTimer() {
   startTime = Date.now();
   timerInterval = setInterval(() => {
@@ -79,12 +98,21 @@ function startTimer() {
   }, 1000);
 }
 
+/**
+ * Stops and clears the timer.
+ */
 function stopTimer() {
   clearInterval(timerInterval);
   timer.textContent = 'Time: 00:00';
   startedTimer = false;
 }
 
+/**
+ * Formats the time by converting it to seconds and Stringifies the extracted minutes 
+ * and seconds.
+ * @param {*} time 
+ * @returns String
+ */
 function formatTime(time) {
   const totalSeconds = Math.floor(time / 1000);
   const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
@@ -92,6 +120,9 @@ function formatTime(time) {
   return `${minutes}:${seconds}`;
 } 
 
+/**
+ * Gets the device camera started and displays the video feed on the home page.
+ */
 async function cameraSetup() {
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
@@ -101,21 +132,25 @@ async function cameraSetup() {
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       console.log("Video metadata loaded, playing video.");
-      detectFrame(); // Start detection
+      detectFrame(); // start detection
     };
   }
 }
 
-
+/**
+ * Stops the previous video stream and frees camera resources.
+ */
 async function reloadResources() {
-  // Stop previous video stream
   if (video.srcObject) {
     const tracks = video.srcObject.getTracks();
     tracks.forEach(track => track.stop());
-    video.srcObject = null;
+    video.srcObject = null; // deactivates video stream
   }
 }
 
+/**
+ * Loads the custom CNN Model.
+ */
 async function loadModel() {
   console.log("Loading model...");
   try {
@@ -127,28 +162,36 @@ async function loadModel() {
   }
 }
 
-function drawFeedback(isSquatting, confidence) {
+/**
+ * Displays feedback to user regarding squat detection to let the user know if the squat was detected.
+ * @param {*} isSquatting Boolean
+ */
+function drawFeedback(isSquatting) {
   const currentTime = Date.now();
   if (isSquatting && (currentTime - lastSquatDetectedTime) > squatCooldown) {
     lastSquatDetectedTime = currentTime; // Update the time when squat was detected
   }
+
+  // Clear canvas between feedback
   canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
   canvasContext.globalAlpha = 0.3;
   canvasContext.fillStyle = isSquatting ? 'green' : 'red';
   canvasContext.fillRect(0, 0, canvas.width, canvas.height);
 
+  const wordList = ["Good Job", "Awesome", "Keep Going", "You're Doing Great!", "Look at you go!", 
+    "Amazing", "Don't Stop now!", "One rep at a time", "A healthier you will thank you", "Dont give up",
+    "You've got this!", "Stay determined", "Keep working hard"];
+
   canvasContext.globalAlpha = 1.0;
   canvasContext.font = '30px Arial';
   canvasContext.fillStyle = 'white';
   canvasContext.textAlign = 'center';
-  const feedbackText = isSquatting ? `Squat Detected (Confidence: ${Math.round(confidence * 100)}%)` : `No Squat (Confidence: ${Math.round(confidence * 100)}%)`;
-  canvasContext.fillText(feedbackText, canvas.width / 2, canvas.height / 2);
-
+  //Display encourgement words when squat is performed.
   if (isSquatting) {
-    canvasContext.strokeStyle = 'blue';
-    canvasContext.lineWidth = 5;
-    canvasContext.strokeRect(50, 50, canvas.width - 100, canvas.height - 100);
+    const randomWord = Math.floor(Math.random() * wordList.length);
+    const feedbackText = `${wordList[randomWord]}`;
+    canvasContext.fillText(feedbackText, canvas.width / 2, canvas.height / 2);
   }
 
   //Start timer when squat is performed
@@ -158,9 +201,15 @@ function drawFeedback(isSquatting, confidence) {
   }
 }
 
-
+/**
+ * Processes every 5th frame and convert it to a tensor that is suitable for the model and then
+ * normalizes pixel values and adds a batch dimension to make tensor shape which matches models 
+ * expected input. Data is then sent to Worker.
+ * @returns 
+ */
 async function detectFrame() {
   try {
+    // Check if video is ready
     if (video.videoWidth === 0 || video.videoHeight === 0) {
       requestAnimationFrame(detectFrame);
       return;
@@ -176,7 +225,7 @@ async function detectFrame() {
         console.log('Sending to worker:', imageData);
         worker.postMessage({ imageData });
 
-        tf.dispose([input, resized, normalized]);
+        tf.dispose([input, resized, normalized]); // dispose tensor to free up space
       } else {
         console.log("Model is not loaded.");
       }
@@ -189,9 +238,14 @@ async function detectFrame() {
     await reloadResources();
   }
 
-  requestAnimationFrame(detectFrame);
+  //schedule request next frame
+  requestAnimationFrame(detectFrame); // process runs in loop
 }
 
+/**
+ * Begins the squat detection. First this function frees resources, 
+ * loads the CNN model, sets up the camera, and then begins the frame detection.
+ */
 async function startSquatDetection() {
   await reloadResources();
   await loadModel();
@@ -201,13 +255,12 @@ async function startSquatDetection() {
   detectFrame();
 }
 
+/**
+ * Stops the squat detection. Frees camera resources and then stops the timer.
+ */
 function stopSquatDetection() {
   console.log("Squat detection stopped");
-  if (video.srcObject) {
-      const tracks = video.srcObject.getTracks();
-      tracks.forEach(track => track.stop());
-      video.srcObject = null;
-  }
+  reloadResources();
   stopTimer();
   startedTimer = false;
 }
